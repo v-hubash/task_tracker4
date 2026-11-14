@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="#" class="text-decoration-none text-muted small">
+        &larr; Назад до списку
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Основна інформація про завдання -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="h4 fw-normal text-dark mb-0">{{ task.title }}</h1>
+                <div class="d-flex gap-2">
+                    <a href="#" class="btn btn-sm btn-outline-dark rounded-pill px-3">Редагувати</a>
+                    <a href="#" class="btn btn-sm btn-outline-danger rounded-pill px-3">Видалити</a>
+                </div>
+            </div>
+
+            <!-- Бейджи статусу та пріоритету -->
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+                {% if task.status == 'pending' %}
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal px-2 py-1">To Do</span>
+                {% elif task.status == 'in_progress' %}
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-normal px-2 py-1">In Progress</span>
+                {% elif task.status == 'completed' %}
+                    <span class="badge bg-success bg-opacity-10 text-success fw-normal px-2 py-1">Completed</span>
+                {% endif %}
+
+                {% if task.priority == 'high' %}
+                    <span class="badge bg-warning bg-opacity-10 text-warning text-dark fw-normal px-2 py-1">High</span>
+                {% elif task.priority == 'urgent' %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger fw-normal px-2 py-1">Urgent</span>
+                {% elif task.priority == 'low' %}
+                    <span class="badge bg-light text-muted fw-normal px-2 py-1">Low</span>
+                {% elif task.priority == 'medium' %}
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal px-2 py-1">Medium</span>
+                {% endif %}
+            </div>
+
+            <!-- Опис -->
+            <div class="mb-4">
+                <h6 class="text-uppercase fs-7 text-muted fw-semibold mb-2" style="font-size: 0.75rem;">Опис</h6>
+                {% if task.description %}
+                    <p class="text-dark mb-0" style="white-space: pre-line; line-height: 1.6;">{{ task.description }}</p>
+                {% else %}
+                    <p class="text-muted small mb-0">Опис відсутній.</p>
+                {% endif %}
+            </div>
+
+            <!-- Вкладення до завдання -->
+            {% if task.attachments %}
+            <div class="pt-3 border-top">
+                <h6 class="text-uppercase fs-7 text-muted fw-semibold mb-2" style="font-size: 0.75rem;">Вкладення</h6>
+                <a href="{{ task.attachments.url }}" class="text-decoration-none small text-dark d-inline-flex align-items-center gap-1 bg-light px-3 py-2 rounded-2" target="_blank">
+                    📎 Завантажити файл завдання
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Блок коментарів -->
+        <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+            <h5 class="fw-normal text-dark mb-4 fs-6">Коментарі ({{ task.comments.count }})</h5>
+
+            {% if task.comments.all %}
+                <div class="d-flex flex-column gap-3 mb-4">
+                    {% for comment in task.comments.all %}
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold small text-dark">{{ comment.author.username }}</span>
+                            <span class="text-muted" style="font-size: 0.75rem;">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <p class="text-dark small mb-2" style="white-space: pre-line;">{{ comment.content }}</p>
+                        {% if comment.attachments %}
+                            <div>
+                                <a href="{{ comment.attachments.url }}" class="small text-dark text-decoration-none d-inline-flex align-items-center gap-1" target="_blank" style="font-size: 0.8rem;">
+                                    📎 Файл до коментаря
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-4">Коментарів поки немає. Будьте першим!</p>
+            {% endif %}
+
+            <!-- Форма додавання коментаря -->
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <textarea name="content" class="form-control form-control-sm border-0 bg-light p-3 rounded-3" rows="3" placeholder="Написати коментар..."></textarea>
+                </div>
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-3">
+                    <input type="file" name="attachments" class="form-control form-control-sm border-0 bg-light py-2">
+                    <button type="submit" class="btn btn-dark btn-sm px-4 rounded-pill">Відправити</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Бокова панель з деталями -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+            <h6 class="text-uppercase fs-7 text-muted fw-semibold mb-3" style="font-size: 0.75rem;">Інформація</h6>
+            
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small">
+                <li class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Автор</span>
+                    <span class="fw-medium text-dark">{{ task.author.username }}</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted">Виконавці</span>
+                    <span class="fw-medium text-dark text-end">
+                        {% if task.executors.all %}
+                            {% for exec in task.executors.all %}
+                                {{ exec.username }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Дедлайн</span>
+                    <span class="fw-medium text-dark">
+                        {% if task.deadline %}{{ task.deadline|date:"d.m.Y H:i" }}{% else %}—{% endif %}
+                    </span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Створено</span>
+                    <span class="text-dark">{{ task.created_at|date:"d.m.Y H:i" }}</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Оновлено</span>
+                    <span class="text-dark">{{ task.updated_at|date:"d.m.Y H:i" }}</span>
+                </li>
+                {% if task.completed_at %}
+                <li class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Завершено</span>
+                    <span class="text-dark">{{ task.completed_at|date:"d.m.Y H:i" }}</span>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
